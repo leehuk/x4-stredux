@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English -->
+<language>
+	<page id="64563" voice="no">
+		<t id="1001">Station Trader Outbound</t>
+		<t id="1002">Station Trader that can only make outbound trades</t>
+		<t id="1003">Dock at Home Station</t>
+
+		<t id="1050">Home Station</t>
+
+		<t id="2001">Not assigned to a station</t>
+		<t id="2002">Station no longer exists</t>
+		<t id="2003">No wares assigned</t>
+	</page>
+</language>

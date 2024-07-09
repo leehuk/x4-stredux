@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+    <add sel="/aiscript[@name='order.assist']/attention/actions/do_if/do_if/do_if[@value='not $createdefaultorder?']">
+        <do_if value="$orderdef.$id == 'STRedux_Outbound'">
+            <do_if value="$createdefaultorder? or (this.assignedcontrolled.waretransport == $commander.waretransport)">
+                <do_if value="$createdefaultorder?">
+                    <create_order id="$orderdef.$id" object="this.assignedcontrolled" default="true">
+                        <param name="homebase" value="$orderdef.$homebase" />
+                        <param name="homedock" value="$orderdef.$homedock" />
+                        <param name="warebasket" value="$orderdef.$warebasket" />
+                        <param name="range" value="$orderdef.$range" />
+                        <param name="minsell" value="$orderdef.$minsell" />
+                        <param name="maxsell" value="$orderdef.$maxsell" />
+                    </create_order>
+                </do_if>
+                <do_else>
+                    <set_value name="$orderdef.$homebase" exact="$order.$homebase" />
+                    <set_value name="$orderdef.$homedock" exact="$order.$homedock" />
+                    <set_value name="$orderdef.$warebasket" exact="$order.$warebasket" />
+                    <set_value name="$orderdef.$range" exact="$order.$range" />
+                    <set_value name="$orderdef.$minsell" exact="$order.$minsell" />
+                    <set_value name="$orderdef.$maxsell" exact="$order.$maxsell" />
+                    <run_script name="$scriptname">
+                        <param name="homebase" value="$order.$homebase" />
+                        <param name="homedock" value="$order.$homedock" />
+                        <param name="warebasket" value="$order.$warebasket" />
+                        <param name="range" value="$order.$range" />
+                        <param name="minsell" value="$order.$minsell" />
+                        <param name="maxsell" value="$order.$maxsell" />
+                    </run_script>
+                </do_else>
+
+            </do_if>
+        </do_if>
+    </add>
+</diff>
