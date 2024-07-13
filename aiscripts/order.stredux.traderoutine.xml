@@ -69,8 +69,8 @@
       <param name="debugchance2" type="bool" default="0" advanced="true" text="{1041, 10142}" comment="Verbose debug output">
         <input_param name="truevalue" value="100"/>
       </param>
-      <param name="buystation" default="null" type="internal"/>
-      <param name="buydock" default="false" type="internal"/>
+      <param name="stxoutstation" default="null" type="internal"/>
+      <param name="stxoutdock" default="false" type="internal"/>
     </params>
     <requires>
       <match shiptype="shiptype.lasertower" negate="true"/>
@@ -260,11 +260,11 @@
       </do_if>
       <remove_value name="$forcelongidle"/>
       <!-- Idle for a while -->
-      <do_if value="$buydock">
-        <do_if value="@this.ship.dock.container != $buystation or (this.ship.dock and not this.ship.dock.istradingallowed)">
-          <debug_text text="player.age + ' moving to dock at ' + $buystation.knownname" chance="$debugchance"/>
+      <do_if value="$stxoutdock">
+        <do_if value="@this.ship.dock.container != $stxoutstation or (this.ship.dock and not this.ship.dock.istradingallowed)">
+          <debug_text text="player.age + ' moving to dock at ' + $stxoutstation.knownname" chance="$debugchance"/>
           <run_script name="'order.dock'">
-            <param name="destination" value="$buystation"/>
+            <param name="destination" value="$stxoutstation"/>
             <param name="trading" value="true"/>
             <param name="waittime" value="60min"/>
             <param name="internalorder" value="true"/>
@@ -366,11 +366,11 @@
         <set_value name="$idleduration" min="5s" max="10s"/>
       </do_if>
       <!-- Idle for a while -->
-      <do_if value="$buydock">
-        <do_if value="@this.ship.dock.container != $buystation or (this.ship.dock and not this.ship.dock.istradingallowed)">
-          <debug_text text="player.age + ' moving to dock at ' + $buystation.knownname" chance="$debugchance"/>
+      <do_if value="$stxoutdock">
+        <do_if value="@this.ship.dock.container != $stxoutstation or (this.ship.dock and not this.ship.dock.istradingallowed)">
+          <debug_text text="player.age + ' moving to dock at ' + $stxoutstation.knownname" chance="$debugchance"/>
           <run_script name="'order.dock'">
-            <param name="destination" value="$buystation"/>
+            <param name="destination" value="$stxoutstation"/>
             <param name="trading" value="true"/>
             <param name="waittime" value="60min"/>
             <param name="internalorder" value="true"/>
@@ -452,8 +452,8 @@
         <param name="selltofactions" value="$selltofactions"/>
         <param name="debugchance" value="$debugchance"/>
         <param name="debugchance2" value="$debugchance2"/>
-        <param name="buystation" value="$buystation"/>
-        <param name="buydock" value="$buydock"/>
+        <param name="stxoutstation" value="$stxoutstation"/>
+        <param name="stxoutdock" value="$stxoutdock"/>
         <save_retval name="selloffer" variable="$selloffer"/>
         <save_retval name="buyoffer" variable="$buyoffer"/>
         <save_retval name="failurereason" variable="$failurereason"/>

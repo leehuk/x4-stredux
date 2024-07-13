@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <diff>
     <add sel="/aiscript[@name='trade.find.free']/params">
-        <param name="buystation" default="null" type="internal" />
-        <param name="buydock" default="false" type="internal" />
+        <param name="stxoutstation" default="null" type="internal" />
+        <param name="stxoutdock" default="false" type="internal" />
     </add>
 
     <add sel="/aiscript[@name='trade.find.free']/attention/actions/do_elseif/do_if/do_all/do_if[2]" pos="before">
-        <do_if value="@$buystation">
-            <find_sell_offer tradepartner="this.ship" seller="$buystation" result="$selloffers" wares="$filteredwarebasket" multiple="true">
+        <do_if value="@$stxoutstation">
+            <find_sell_offer tradepartner="this.ship" seller="$stxoutstation" result="$selloffers" wares="$filteredwarebasket" multiple="true">
                 <totalvolume min="$practicalminvolume" />
                 <mintotalvolume max="$practicalfreevolume" />
                 <relativeprice max="$maxrelprice" tradepartner="if this.ship.isplayerowned then this.ship else null" comment="a value less than 0 means the sellprice must be below average" />
@@ -21,11 +21,11 @@
 
     <!-- Disable the idle movement runner -->
     <add sel="/aiscript[@name='trade.find.free']/attention/actions/do_if[@value='this.sector']" pos="before">
-        <do_if value="not @$buydock">
-            <set_value name="$buydock" exact="false" />
+        <do_if value="not @$stxoutdock">
+            <set_value name="$stxoutdock" exact="false" />
         </do_if>
     </add>
-    <replace sel="/aiscript[@name='trade.find.free']/attention/actions/do_if[@value='this.sector']/@value">this.sector and not $buydock</replace>
+    <replace sel="/aiscript[@name='trade.find.free']/attention/actions/do_if[@value='this.sector']/@value">this.sector and not $stxoutdock</replace>
 </diff>
 
 <!-- $debugchance -->

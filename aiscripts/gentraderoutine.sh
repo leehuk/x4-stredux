@@ -97,8 +97,8 @@ doxpath '/aiscript/@name' 'uv' 'order.stredux.traderoutine'
 doxpath '/aiscript/order/@id' 'uv' 'STRedux_TradeRoutine'
 
 # Add our custom options
-doxpath '(/aiscript/order/params/param)[last()]' asv 'param' '' 'name' 'buystation' 'default' 'null' 'type' 'internal'
-doxpath '(/aiscript/order/params/param)[last()]' asv 'param' '' 'name' 'buydock' 'default' 'false' 'type' 'internal'
+doxpath '(/aiscript/order/params/param)[last()]' asv 'param' '' 'name' 'stxoutstation' 'default' 'null' 'type' 'internal'
+doxpath '(/aiscript/order/params/param)[last()]' asv 'param' '' 'name' 'stxoutdock' 'default' 'false' 'type' 'internal'
 
 # Remove the version patches
 doxpath '/aiscript/patch' dn
@@ -122,31 +122,31 @@ doxpath '/aiscript/attention/actions/do_if/set_order_syncpoint_reached/../@value
 doxpath '/aiscript/init/do_if[@value="this.isplayerowned"]' 'dn'
 
 # Add our parameters to the <run_script> for trade.find.free
-doxpath '(/aiscript/attention/actions/run_script/param)[last()]' asv 'param' '' 'name' 'buystation' 'value' '$buystation'
-doxpath '(/aiscript/attention/actions/run_script/param)[last()]' asv 'param' '' 'name' 'buydock' 'value' '$buydock'
+doxpath '(/aiscript/attention/actions/run_script/param)[last()]' asv 'param' '' 'name' 'stxoutstation' 'value' '$stxoutstation'
+doxpath '(/aiscript/attention/actions/run_script/param)[last()]' asv 'param' '' 'name' 'stxoutdock' 'value' '$stxoutdock'
 
 # Swap move.idle over to optional docking
 # This ones trixy -- we need to inject all our new flow into the move.idle instruction, swap it to a do_if
 # and then restore the move.idle under an else
 doxpath "/aiscript/attention/actions/run_script[@name=\"'move.idle'\"]/*" dn
-doxpath "/aiscript/attention/actions/run_script[@name=\"'move.idle'\"]" av 'value' '$buydock'
+doxpath "/aiscript/attention/actions/run_script[@name=\"'move.idle'\"]" av 'value' '$stxoutdock'
 doxpath "/aiscript/attention/actions/run_script[@name=\"'move.idle'\"]/@name" dv
-doxpath '/aiscript/attention/actions/run_script[@value="$buydock"]' rn 'do_if'
+doxpath '/aiscript/attention/actions/run_script[@value="$stxoutdock"]' rn 'do_if'
 
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]' acv 'do_if' '' 'value' '@this.ship.dock.container != $buystation or (this.ship.dock and not this.ship.dock.istradingallowed)'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if' acv 'debug_text' '' 'text' "player.age + ' moving to dock at ' + \$buystation.knownname" 'chance' '$debugchance'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if' acv 'run_script' '' 'name' "'order.dock'"
+doxpath '/aiscript/attention/actions/do_if[@value="$stxoutdock"]' acv 'do_if' '' 'value' '@this.ship.dock.container != $stxoutstation or (this.ship.dock and not this.ship.dock.istradingallowed)'
+doxpath '/aiscript/attention/actions/do_if[@value="$stxoutdock"]/do_if' acv 'debug_text' '' 'text' "player.age + ' moving to dock at ' + \$stxoutstation.knownname" 'chance' '$debugchance'
+doxpath '/aiscript/attention/actions/do_if[@value="$stxoutdock"]/do_if' acv 'run_script' '' 'name' "'order.dock'"
 
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'destination' 'value' '$buystation'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'trading' 'value' 'true'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'waittime' 'value' '60min'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'internalorder' 'value' 'true'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'debugchance' 'value' '$debugchance'
+doxpath '/aiscript/attention/actions/do_if[@value="$stxoutdock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'destination' 'value' '$stxoutstation'
+doxpath '/aiscript/attention/actions/do_if[@value="$stxoutdock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'trading' 'value' 'true'
+doxpath '/aiscript/attention/actions/do_if[@value="$stxoutdock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'waittime' 'value' '60min'
+doxpath '/aiscript/attention/actions/do_if[@value="$stxoutdock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'internalorder' 'value' 'true'
+doxpath '/aiscript/attention/actions/do_if[@value="$stxoutdock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'debugchance' 'value' '$debugchance'
 
-doxpath '//aiscript/attention/actions/do_if[@value="$buydock"]/do_if' as 'do_else'
-doxpath '//aiscript/attention/actions/do_if[@value="$buydock"]/do_else' acv 'wait' '' 'min' '10s' 'max' '25s'
+doxpath '//aiscript/attention/actions/do_if[@value="$stxoutdock"]/do_if' as 'do_else'
+doxpath '//aiscript/attention/actions/do_if[@value="$stxoutdock"]/do_else' acv 'wait' '' 'min' '10s' 'max' '25s'
 
-doxpath '//aiscript/attention/actions/do_if[@value="$buydock"]' as 'do_else'
+doxpath '//aiscript/attention/actions/do_if[@value="$stxoutdock"]' as 'do_else'
 doxpath '//aiscript/attention/actions/do_else[not(*)]' ac 'run_script'
 doxpath '//aiscript/attention/actions/do_else/run_script[not(@name)]' av 'name' "'move.idle'"
 doxpath '//aiscript/attention/actions/do_else/run_script' acv 'param' '' 'name' 'TimeOut' 'value' '$idleduration'

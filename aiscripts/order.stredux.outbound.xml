@@ -2,12 +2,16 @@
 <aiscript name="order.stredux.outbound" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
     <order id="STRedux_Outbound" name="{64563, 1001}" description="{64563, 1002}" category="trade" allowinloop="false">
         <params>
-            <param name="homebase" required="true" default="null" type="object" text="{64563, 1050}" comment="Home station to trade for">
+            <param name="stxoutstation" required="true" default="null" type="object" text="{64563, 1050}" comment="Station to trade for">
                 <input_param name="class" value="[class.station]" />
             </param>
-            <param name="warebasket" default="null" type="internal" text="{1041, 10146}" comment="Wares. List of resources that we will supply." />
-            <param name="homedock" default="false" type="bool" text="{64563, 1003}" comment="Always dock at home station"/>
-            <param name="range" default="0" type="internal" text="{1041, 10005}" comment="Always $homebase.sector" />
+            <param name="warebasket" default="null" type="internal" text="{1041, 10146}" comment="Wares. List of resources that we will supply, populated from station" />
+            <param name="manualwarebasket" required="false" default="null" type="list" text="{64563, 1052}" comment="Optional wares override">
+                <input_param name="type" value="'ware'"/>
+                <input_param name="cancarry" value="this.ship"/>
+              </param>
+            <param name="stxoutdock" default="false" type="bool" text="{64563, 1051}" comment="Always dock at home station" />
+            <param name="range" default="0" type="internal" text="{1041, 10005}" comment="Always $stxoutstation.sector" />
             <param name="minbuy" default="0" type="internal" text="{1041, 10067}" comment="Unused" />
             <param name="maxbuy" default="0" type="internal" text="{1041, 10067}" comment="Unused" />
             <param name="minsell" default="0" type="number" text="{1041, 10069}" comment="Min gate distance to sell resources.">
@@ -16,10 +20,10 @@
                 <input_param name="max" value="5" />
                 <input_param name="step" value="1" />
             </param>
-            <param name="maxsell" default="0" type="number" text="{1041, 10058}" comment="Max gate distance to sell resources. Maximum sell range is limited by $homebase.commander">
+            <param name="maxsell" default="0" type="number" text="{1041, 10058}" comment="Max gate distance to sell resources. Maximum sell range is limited by $stxoutstation.commander">
                 <input_param name="startvalue" value="0" />
                 <input_param name="min" value="0" />
-                <input_param name="max" value="$homebase.tradenpc.skill.management" />
+                <input_param name="max" value="$stxoutstation.tradenpc.skill.management/3" />
                 <input_param name="step" value="1" />
             </param>
             <param name="duration" default="0s" type="internal" infinitevalue="0s" text="{1041, 10034}" comment="Unused" />
@@ -46,7 +50,6 @@
         <handler ref="ResupplyHandler" />
         <handler ref="TargetInvalidHandler" />
         <handler ref="TideHandler" />
-        <!-- TODO: Possible handler for commander changed? -->
     </interrupts>
     <init>
         <set_value name="$time_start" exact="player.age" />
@@ -56,26 +59,26 @@
             <remove_object_account object="this.assignedcontrolled" transfer="true" />
         </do_if>
 
-        <set_value name="$range" exact="$homebase.sector" />
+        <set_value name="$range" exact="$stxoutstation.sector" />
 
         <set_command_action commandaction="commandaction.searchingtrades" />
     </init>
     <attention min="unknown">
         <actions>
             <!-- this.ship.commander.tradenpc.skill.management -->
-            <debug_text text="'NPC tradeskill: %s %s'.[$homebase.tradenpc.knownname,$homebase.tradenpc.skill.management]" chance="$debugchance" />
-            <do_if value="(not $homebase.exists) or $homebase.iswreck">
+            <debug_text text="'NPC tradeskill: %s %s'.[$stxoutstation.tradenpc.knownname,$stxoutstation.tradenpc.skill.management]" chance="$debugchance" />
+            <do_if value="(not $stxoutstation.exists) or $stxoutstation.iswreck">
                 <debug_text text="'Homebase does not exist'" chance="$debugchance" />
                 <!-- TODO: Needs to fail order and wait -->
                 <set_value name="$failurereason" exact="{64563, 2002}" comment="Station no longer exists" />
                 <resume label="finish" />
             </do_if>
 
-            <!-- update the wares we deal with for a new trade run - ensure that we don't miss any wares if the list has changed due to the homebase being expanded -->
-            <do_if value="$homebase.exists and not $homebase.iswreck">
-                <set_value name="$resources" exact="$homebase.resources.list" />
-                <set_value name="$products" exact="$homebase.products.list" />
-                <set_value name="$tradewares" exact="$homebase.tradewares.list" />
+            <!-- update the wares we deal with for a new trade run - ensure that we don't miss any wares if the list has changed due to the stxoutstation being expanded -->
+            <do_if value="$stxoutstation.exists and not $stxoutstation.iswreck">
+                <set_value name="$resources" exact="$stxoutstation.resources.list" />
+                <set_value name="$products" exact="$stxoutstation.products.list" />
+                <set_value name="$tradewares" exact="$stxoutstation.tradewares.list" />
 
                 <!-- at this point, $products contains all of the wares that our commander wants to dispose of. clean up all of the entries in this.$sellpricetable that are not products. -->
                 <do_if value="this.$sellpricetable?">
@@ -87,7 +90,7 @@
                     </do_for_each>
                 </do_if>
 
-                <!-- start with an empty list in case $warebasket has wares that $homebase no longer needs. -->
+                <!-- start with an empty list in case $warebasket has wares that $stxoutstation no longer needs. -->
                 <create_list name="$locwares" />
 
                 <do_for_each name="$ware" in="$resources">
@@ -158,8 +161,8 @@
             <run_script name="'order.stredux.traderoutine'">
                 <param name="warebasket" value="$warebasket.clone" />
                 <param name="range" value="$range" />
-                <param name="buystation" value="$homebase" />
-                <param name="buydock" value="$homedock" />
+                <param name="stxoutstation" value="$stxoutstation" />
+                <param name="stxoutdock" value="$stxoutdock" />
                 <param name="minsell" value="$minsell" />
                 <param name="maxsell" value="$maxsell" />
                 <param name="debugchance" value="$debugchance" />

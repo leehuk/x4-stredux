@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <diff>
     <add sel="/aiscript[@name='trade.find.commander']/params">
-        <param name="buystation" default="null" type="internal" />
-        <param name="buydock" default="false" type="internal" />
+        <param name="stxoutstation" default="null" type="internal" />
+        <param name="stxoutdock" default="false" type="internal" />
     </add>
 </diff>
