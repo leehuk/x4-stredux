@@ -21,7 +21,7 @@
                 <do_for_each name="$ware" in="$resources">
                     <do_if value="not $locwares.indexof.{$ware}">
                         <do_if value="(this.ship.cargo.{$ware}.max gt 0) and not $ware.isprocessed">
-                            <do_if value="$manualwarebasket and $manualwarebasket.indexof.{$ware}">
+                            <do_if value="(not $manualwarebasket) or $manualwarebasket.indexof.{$ware}">
                                 <append_to_list name="$locwares" exact="$ware" />
                                 <debug_text text="'streduxupdatewares: adding resource: %s'.[$ware]" chance="$debugchance" />
                             </do_if>
@@ -31,7 +31,7 @@
                 <do_for_each name="$ware" in="$products">
                     <do_if value="not $locwares.indexof.{$ware}">
                         <do_if value="(this.ship.cargo.{$ware}.max gt 0) and not $ware.isprocessed">
-                            <do_if value="$manualwarebasket and $manualwarebasket.indexof.{$ware}">
+                            <do_if value="(not $manualwarebasket) or $manualwarebasket.indexof.{$ware}">
                                 <append_to_list name="$locwares" exact="$ware" />
                                 <debug_text text="'streduxupdatewares: adding product: %s'.[$ware]" chance="$debugchance" />
                             </do_if>
@@ -41,8 +41,7 @@
                 <do_for_each name="$ware" in="$tradewares">
                     <do_if value="not $locwares.indexof.{$ware}">
                         <do_if value="(this.ship.cargo.{$ware}.max gt 0) and not $ware.isprocessed">
-                            <do_if value="$manualwarebasket and $manualwarebasket.indexof.{$ware}">
-
+                            <do_if value="(not $manualwarebasket) or $manualwarebasket.indexof.{$ware}">
                                 <append_to_list name="$locwares" exact="$ware" />
                                 <debug_text text="'streduxupdatewares: adding tradeware: %s'.[$ware]" chance="$debugchance" />
                             </do_if>

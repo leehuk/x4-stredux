@@ -17,7 +17,7 @@
             <param name="minsell" default="0" type="number" text="{1041, 10069}" comment="Min gate distance to sell resources.">
                 <input_param name="startvalue" value="0" />
                 <input_param name="min" value="0" />
-                <input_param name="max" value="5" />
+                <input_param name="max" value="$stxoutstation.tradenpc.skill.management/3" />
                 <input_param name="step" value="1" />
             </param>
             <param name="maxsell" default="0" type="number" text="{1041, 10058}" comment="Max gate distance to sell resources. Maximum sell range is limited by $stxoutstation.commander">
@@ -118,7 +118,7 @@
                     <resume label="basketcleanup"/>
                 </do_if>
 
-                <debug_text text="'stxout %s: updating warebasket:\nold warebasket (%s): %s\nnew warebasket (%s): %s'.[@this.ship.idcode, $warebasket.count, $warebasket, $locwares.count, $locwares]" chance="$debugchance" />
+                <debug_text text="'stxout %s: updating warebasket:\nold warebasket: %s\nnew warebasket: %s'.[@this.ship.idcode, $warebasket, $locwares]" chance="$debugchance" />
                 <set_value name="$warebasket" exact="$locwares.clone" />
                 <do_if value="@this.ship.order.id == 'STRedux_Outbound'">
                     <edit_order_param order="this.ship.order" param="'warebasket'" value="$locwares" />

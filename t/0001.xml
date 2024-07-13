@@ -7,9 +7,12 @@
 		<t id="1003">Dock at Home Station</t>
 
 		<t id="1050">Home Station</t>
+		<t id="1051">Dock at Home Station</t>
+		<t id="1052">Wares Override</t>
 
 		<t id="2001">Not assigned to a station</t>
 		<t id="2002">Station no longer exists</t>
-		<t id="2003">No wares assigned</t>
+		<t id="2003">Cannot be used on NPC ships</t>
+		<t id="2004">No wares assigned</t>
 	</page>
 </language>

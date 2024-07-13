@@ -5,7 +5,15 @@
         <param name="stxoutdock" default="false" type="internal" />
     </add>
 
-    <add sel="/aiscript[@name='trade.find.free']/attention/actions/do_elseif/do_if/do_all/do_if[2]" pos="before">
+    <!-- Ideally, we wouldn't rerun find_sell_offer here (or find_buy_offer below), but I can't see any good
+         alternatives:
+            - Attempting to param it (<find_sell_offer seller="$optseller" ...>, then a do_if to either set
+              $optseller to null or else $stxoutstation doesn't work as it detects seller exists but is null
+            - Replacing the entire block and its children is a bit invasive
+            - The label/resume flow doesn't work in this scope
+     -->
+    <!-- OUTBOUND: Rerun the trade search with our limitations.  Our station is selling, we are buying -->
+    <add sel="/aiscript[@name='trade.find.free']/attention/actions/do_elseif/do_if/do_all[@exact='$buyspaces.count']/do_if[@value='not $useuniversalstorage? and $baskettransporttypes.count gt 1']" pos="before">
         <do_if value="@$stxoutstation">
             <find_sell_offer tradepartner="this.ship" seller="$stxoutstation" result="$selloffers" wares="$filteredwarebasket" multiple="true">
                 <totalvolume min="$practicalminvolume" />
@@ -14,7 +22,7 @@
             </find_sell_offer>
 
             <do_if value="not $selloffers.count">
-                <debug_text text="'stredux: no sale offers from our station'" chance="$debugchance" />
+                <debug_text text="'stredux %s: no buy offers from our station'.[this.ship.idcode]" chance="$debugchance" />
             </do_if>
         </do_if>
     </add>
