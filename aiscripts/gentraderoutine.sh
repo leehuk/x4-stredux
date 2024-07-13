@@ -14,41 +14,58 @@ doxpath()
     XPATHVALUE="$4"
     shift 4
 
-    export DEBUGOUT=""
-
     case $XPATHTYPE in
     # Select a node (for debugging)
     s)
-        [[ $DEBUGOUT ]] && echo -n "???: " && xmlstarlet sel -t -c "$XPATH" $FILE && echo
+        echo -n "???: " && xmlstarlet sel -t -c "$XPATH" $FILE && echo
         ;;
 
     # Add child to a node
     ac)
         xmlstarlet ed -L -s "$XPATH" -t elem -n "$XPATHREPLACE" $FILE
-        [[ $DEBUGOUT ]] && echo -n "+++: " && xmlstarlet sel -t -c "$XPATH/*" $FILE && echo
+        ;;
+
+    acv)
+        xmlstarlet ed -L -s "$XPATH" -t elem -n "$XPATHREPLACE" $FILE
+
+        XPATHCHILD="$XPATH/$XPATHREPLACE"
+        if [ -n "$XPATHVALUE" ]; then
+            XPATHCHILD="$XPATH/$XPATHVALUE"
+        fi
+
+        while [ -n "$2" ]; do
+            xmlstarlet ed -L -i "$XPATHCHILD" -t attr -n "$1" -v "$2" $FILE
+            shift 2
+        done
         ;;
 
     # Add sibling after a node
     as)
         xmlstarlet ed -L -a "$XPATH" -t elem -n "$XPATHREPLACE" $FILE
-        #[[ $DEBUGOUT ]] && echo -n "+++: " && xmlstarlet sel -t -c "$XPATH" $FILE && echo
+        ;;
+
+    # Add a sibling with values
+    asv)
+        xmlstarlet ed -L -a "$XPATH" -t elem -n "$XPATHREPLACE" $FILE
+
+        while [ -n "$2" ]; do
+            xmlstarlet ed -L -i "$XPATH" -t attr -n "$1" -v "$2" $FILE
+            shift 2
+        done
         ;;
 
     # Add a value to a node
     av)
         xmlstarlet ed -L -i "$XPATH" -t attr -n "$XPATHREPLACE" -v "$XPATHVALUE" $FILE
-        [[ $DEBUGOUT ]] && echo -n "+++: " && xmlstarlet sel -t -c "$XPATH" $FILE && echo
         ;;
 
     # Delete a node
     dn)
-        [[ $DEBUGOUT ]] && echo -n "---: " && xmlstarlet sel -t -c "$XPATH" $FILE && echo
         xmlstarlet ed -L -d "$XPATH" $FILE
         ;;
 
     # Delete a value
     dv)
-        [[ $DEBUGOUT ]] && echo -n "---: " && xmlstarlet sel -t -v "$XPATH" $FILE && echo
         xmlstarlet ed -L -d "$XPATH" $FILE
         ;;
     
@@ -58,9 +75,7 @@ doxpath()
         ;;
 
     uv)
-        [[ $DEBUGOUT ]] && echo -n "---: " && xmlstarlet sel -t -v "$XPATH" $FILE && echo
         xmlstarlet ed -L -u "$XPATH" -v "$XPATHREPLACE" $FILE
-        [[ $DEBUGOUT ]] && echo -n "+++: " && xmlstarlet sel -t -v "$XPATH/*" $FILE && echo
         ;;
 
     *)
@@ -68,8 +83,6 @@ doxpath()
         ;;
     esac
 }
-
-export DEBUGOUT=0
 
 [[ $(type -P "xmlstarlet") ]] || fail "xmlstarlet must be installed"
 
@@ -83,16 +96,9 @@ export FILE=$OUTFILE
 doxpath '/aiscript/@name' 'uv' 'order.stredux.traderoutine'
 doxpath '/aiscript/order/@id' 'uv' 'STRedux_TradeRoutine'
 
-# Add our buystation and buydock options
-doxpath '(/aiscript/order/params/param)[last()]' as 'param'
-doxpath '(/aiscript/order/params/param)[last()]' av 'name' 'buystation'
-doxpath '(/aiscript/order/params/param)[last()]' av 'default' 'null'
-doxpath '(/aiscript/order/params/param)[last()]' av 'type' 'internal'
-
-doxpath '(/aiscript/order/params/param)[last()]' as 'param'
-doxpath '(/aiscript/order/params/param)[last()]' av 'name' 'buydock'
-doxpath '(/aiscript/order/params/param)[last()]' av 'default' 'false'
-doxpath '(/aiscript/order/params/param)[last()]' av 'type' 'internal'
+# Add our custom options
+doxpath '(/aiscript/order/params/param)[last()]' asv 'param' '' 'name' 'buystation' 'default' 'null' 'type' 'internal'
+doxpath '(/aiscript/order/params/param)[last()]' asv 'param' '' 'name' 'buydock' 'default' 'false' 'type' 'internal'
 
 # Remove the version patches
 doxpath '/aiscript/patch' dn
@@ -116,58 +122,31 @@ doxpath '/aiscript/attention/actions/do_if/set_order_syncpoint_reached/../@value
 doxpath '/aiscript/init/do_if[@value="this.isplayerowned"]' 'dn'
 
 # Add our parameters to the <run_script> for trade.find.free
-doxpath '(/aiscript/attention/actions/run_script/param)[last()]' as 'param'
-doxpath '(/aiscript/attention/actions/run_script/param)[last()]' av 'name' 'buystation'
-doxpath '(/aiscript/attention/actions/run_script/param)[last()]' av 'value' '$buystation'
-
-doxpath '(/aiscript/attention/actions/run_script/param)[last()]' as 'param'
-doxpath '(/aiscript/attention/actions/run_script/param)[last()]' av 'name' 'buydock'
-doxpath '(/aiscript/attention/actions/run_script/param)[last()]' av 'value' '$buydock'
+doxpath '(/aiscript/attention/actions/run_script/param)[last()]' asv 'param' '' 'name' 'buystation' 'value' '$buystation'
+doxpath '(/aiscript/attention/actions/run_script/param)[last()]' asv 'param' '' 'name' 'buydock' 'value' '$buydock'
 
 # Swap move.idle over to optional docking
+# This ones trixy -- we need to inject all our new flow into the move.idle instruction, swap it to a do_if
+# and then restore the move.idle under an else
 doxpath "/aiscript/attention/actions/run_script[@name=\"'move.idle'\"]/*" dn
 doxpath "/aiscript/attention/actions/run_script[@name=\"'move.idle'\"]" av 'value' '$buydock'
 doxpath "/aiscript/attention/actions/run_script[@name=\"'move.idle'\"]/@name" dv
 doxpath '/aiscript/attention/actions/run_script[@value="$buydock"]' rn 'do_if'
 
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]' ac 'do_if'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if' av 'value' '@this.ship.dock.container != $buystation or (this.ship.dock and not this.ship.dock.istradingallowed)'
+doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]' acv 'do_if' '' 'value' '@this.ship.dock.container != $buystation or (this.ship.dock and not this.ship.dock.istradingallowed)'
+doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if' acv 'debug_text' '' 'text' "player.age + ' moving to dock at ' + \$buystation.knownname" 'chance' '$debugchance'
+doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if' acv 'run_script' '' 'name' "'order.dock'"
 
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if' ac 'debug_text'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/debug_text' av 'text' "player.age + ' moving to dock at ' + \$buystation.knownname"
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/debug_text' av 'chance' '$debugchance'
-
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if' ac 'run_script'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' av 'name' "'order.dock'"
-
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' ac 'param'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script/param[not(@name)]' av 'name' 'destination'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script/param[not(@value)]' av 'value' '$buystation'
-
-doxpath '//aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' ac 'param'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script/param[not(@name)]' av 'name' 'trading'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script/param[not(@value)]' av 'value' 'true'
-
-doxpath '//aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' ac 'param'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script/param[not(@name)]' av 'name' 'waittime'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script/param[not(@value)]' av 'value' '60min'
-
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' ac 'param'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script/param[not(@name)]' av 'name' 'internalorder'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script/param[not(@value)]' av 'value' 'true'
-
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' ac 'param'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script/param[not(@name)]' av 'name' 'debugchance'
-doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script/param[not(@value)]' av 'value' '$debugchance'
+doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'destination' 'value' '$buystation'
+doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'trading' 'value' 'true'
+doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'waittime' 'value' '60min'
+doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'internalorder' 'value' 'true'
+doxpath '/aiscript/attention/actions/do_if[@value="$buydock"]/do_if/run_script' acv 'param' 'param[not(@value)]' 'name' 'debugchance' 'value' '$debugchance'
 
 doxpath '//aiscript/attention/actions/do_if[@value="$buydock"]/do_if' as 'do_else'
-doxpath '//aiscript/attention/actions/do_if[@value="$buydock"]/do_else' ac 'wait'
-doxpath '//aiscript/attention/actions/do_if[@value="$buydock"]/do_else/wait' av 'min' '10s'
-doxpath '//aiscript/attention/actions/do_if[@value="$buydock"]/do_else/wait' av 'max' '25s'
+doxpath '//aiscript/attention/actions/do_if[@value="$buydock"]/do_else' acv 'wait' '' 'min' '10s' 'max' '25s'
 
 doxpath '//aiscript/attention/actions/do_if[@value="$buydock"]' as 'do_else'
 doxpath '//aiscript/attention/actions/do_else[not(*)]' ac 'run_script'
-doxpath '//aiscript/attention/actions/do_else/run_script' av 'name' "'move.idle'"
-doxpath '//aiscript/attention/actions/do_else/run_script' ac 'param'
-doxpath '//aiscript/attention/actions/do_else/run_script/param' av 'name' 'TimeOut'
-doxpath '//aiscript/attention/actions/do_else/run_script/param' av 'value' '$idleduration'
+doxpath '//aiscript/attention/actions/do_else/run_script[not(@name)]' av 'name' "'move.idle'"
+doxpath '//aiscript/attention/actions/do_else/run_script' acv 'param' '' 'name' 'TimeOut' 'value' '$idleduration'
