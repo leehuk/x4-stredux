@@ -4,7 +4,9 @@
 	<page id="64563" voice="no">
 		<t id="1001">Station Trader Outbound</t>
 		<t id="1002">Station Trader that can only make outbound trades</t>
-		<t id="1003">Dock at Home Station</t>
+
+		<t id="1004">Station Trader Inbound</t>
+		<t id="1005">Station Trader that can only make inbound trades</t>
 
 		<t id="1050">Home Station</t>
 		<t id="1051">Dock at Home Station</t>

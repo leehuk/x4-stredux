@@ -99,6 +99,7 @@ doxpath '/aiscript/order/@id' 'uv' 'STRedux_TradeRoutine'
 # Add our custom options
 doxpath '(/aiscript/order/params/param)[last()]' asv 'param' '' 'name' 'stxoutstation' 'default' 'null' 'type' 'internal'
 doxpath '(/aiscript/order/params/param)[last()]' asv 'param' '' 'name' 'stxoutdock' 'default' 'false' 'type' 'internal'
+doxpath '(/aiscript/order/params/param)[last()]' asv 'param' '' 'name' 'stxinstation' 'default' 'null' 'type' 'internal'
 
 # Remove the version patches
 doxpath '/aiscript/patch' dn
@@ -115,8 +116,8 @@ doxpath '/aiscript/init/set_value[not(@name)]' av name '$findtradescript'
 doxpath '/aiscript/init/set_value[@name="$findtradescript"]' av exact "'trade.find.free'"
 
 # Allow STRedux Trade Orders
-doxpath '/aiscript/init/do_if[2]/@value' 'uv' "this.assignedcontrolled.order.id == 'STRedux_OutboundTrader'"
-doxpath '/aiscript/attention/actions/do_if/set_order_syncpoint_reached/../@value' 'uv' "this.assignedcontrolled.order.id == 'STRedux_OutboundTrader'"
+doxpath '/aiscript/init/do_if[2]/@value' 'uv' "(this.assignedcontrolled.order.id == 'STRedux_OutboundTrader') or (this.assignedcontrolled.order.id == 'STRedux_InboundTrader')"
+doxpath '/aiscript/attention/actions/do_if/set_order_syncpoint_reached/../@value' 'uv' "(this.assignedcontrolled.order.id == 'STRedux_OutboundTrader') or (this.assignedcontrolled.order.id == 'STRedux_InboundTrader')"
 
 # Remove the logic overriding minbuy/minsell/maxbuy/maxsell
 doxpath '/aiscript/init/do_if[@value="this.isplayerowned"]' 'dn'
@@ -124,6 +125,7 @@ doxpath '/aiscript/init/do_if[@value="this.isplayerowned"]' 'dn'
 # Add our parameters to the <run_script> for trade.find.free
 doxpath '(/aiscript/attention/actions/run_script/param)[last()]' asv 'param' '' 'name' 'stxoutstation' 'value' '$stxoutstation'
 doxpath '(/aiscript/attention/actions/run_script/param)[last()]' asv 'param' '' 'name' 'stxoutdock' 'value' '$stxoutdock'
+doxpath '(/aiscript/attention/actions/run_script/param)[last()]' asv 'param' '' 'name' 'stxinstation' 'value' '$stxinstation'
 
 # Swap move.idle over to optional docking
 # This ones trixy -- we need to inject all our new flow into the move.idle instruction, swap it to a do_if

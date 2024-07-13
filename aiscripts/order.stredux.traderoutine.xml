@@ -71,6 +71,7 @@
       </param>
       <param name="stxoutstation" default="null" type="internal"/>
       <param name="stxoutdock" default="false" type="internal"/>
+      <param name="stxinstation" default="null" type="internal"/>
     </params>
     <requires>
       <match shiptype="shiptype.lasertower" negate="true"/>
@@ -123,7 +124,7 @@
       <set_command command="command.freetrade"/>
     </do_else>
     <set_value name="$time_start" exact="player.age"/>
-    <do_if value="this.assignedcontrolled.order.id == 'STRedux_OutboundTrader'">
+    <do_if value="(this.assignedcontrolled.order.id == 'STRedux_OutboundTrader') or (this.assignedcontrolled.order.id == 'STRedux_InboundTrader')">
       <set_value name="$thisorder" exact="this.assignedcontrolled.order"/>
     </do_if>
     <do_if value="this.assignedcontrolled.hasownaccount and not this.assignedcontrolled.tradeorders.count">
@@ -454,6 +455,7 @@
         <param name="debugchance2" value="$debugchance2"/>
         <param name="stxoutstation" value="$stxoutstation"/>
         <param name="stxoutdock" value="$stxoutdock"/>
+        <param name="stxinstation" value="$stxinstation"/>
         <save_retval name="selloffer" variable="$selloffer"/>
         <save_retval name="buyoffer" variable="$buyoffer"/>
         <save_retval name="failurereason" variable="$failurereason"/>
@@ -626,7 +628,7 @@
         </do_if>
       </do_if>
       <remove_value name="$buyoffer_offeramount"/>
-      <do_if value="this.assignedcontrolled.order.id == 'STRedux_OutboundTrader'">
+      <do_if value="(this.assignedcontrolled.order.id == 'STRedux_OutboundTrader') or (this.assignedcontrolled.order.id == 'STRedux_InboundTrader')">
         <set_order_syncpoint_reached order="this.assignedcontrolled.order"/>
       </do_if>
       <!--Queue the sell order first as immediate. It will be displaced by the buy order also being queued as immediate-->

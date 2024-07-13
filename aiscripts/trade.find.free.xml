@@ -3,6 +3,7 @@
     <add sel="/aiscript[@name='trade.find.free']/params">
         <param name="stxoutstation" default="null" type="internal" />
         <param name="stxoutdock" default="false" type="internal" />
+        <param name="stxinstation" default="null" type="internal" />
     </add>
 
     <!-- Ideally, we wouldn't rerun find_sell_offer here (or find_buy_offer below), but I can't see any good
@@ -34,6 +35,17 @@
         </do_if>
     </add>
     <replace sel="/aiscript[@name='trade.find.free']/attention/actions/do_if[@value='this.sector']/@value">this.sector and not $stxoutdock</replace>
-</diff>
 
-<!-- $debugchance -->
+    <!-- INBOUND: Rerun the trade search with our limitations.  We are selling, our station is buying -->
+    <add sel="/aiscript[@name='trade.find.free']/attention/actions/do_all[@exact='$sellspaces.count']/do_if[@value='not $smuggle and this.assignedcontrolled.hidecargochance lt 100']" pos="before">
+        <do_if value="@$stxinstation">
+            <find_buy_offer tradepartner="this.ship" buyer="$stxinstation" wares="$filteredwarebasket" result="$buyoffers" multiple="true">
+                <offervolume min="if $sellcurrentcargo_internal? then 1 else (if $practicalminvolume? then $practicalminvolume else 1)" tradepartner="this.ship"/>
+              </find_buy_offer>
+
+            <do_if value="not $buyoffers.count">
+                <debug_text text="'stredux %s: no buy offers from our station'.[this.ship.idcode]" chance="$debugchance" />
+            </do_if>
+        </do_if>
+    </add>
+</diff>
