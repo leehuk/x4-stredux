@@ -64,6 +64,7 @@
     </init>
     <attention min="unknown">
         <actions>
+            <!-- BETA: FORCE DEBUGGING ON -->
             <set_value name="$debugchance" exact="100"/>
 
             <debug_text text="'stxout: starting...'" chance="$debugchance" />

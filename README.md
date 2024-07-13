@@ -10,6 +10,10 @@ Adds two new default ship behaviours for inbound and outbound station traders, a
 
 Heavily inspired by the [Mules Supply and Warehouses Extended](https://www.nexusmods.com/x4foundations/mods/416) mod, but for better and worse relying almost entirely on vanilla X4 7.0 trading routines
 
+## DOWNLOAD
+
+On the [Releases](https://github.com/leehuk/x4-stredux/releases) page for now.  Click 'Assets' and grab the latest station_traders_vx.zip
+
 ## HOW IT WORKS
 
 * Assign a ships default behaviour to either "Station Trader Inbound" or "Station Trader Outbound"
