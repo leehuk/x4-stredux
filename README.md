@@ -13,7 +13,7 @@ Heavily inspired by the [Mules Supply and Warehouses Extended](https://www.nexus
 ## HOW IT WORKS
 
 * Assign a ships default behaviour to either "Station Trader Inbound" or "Station Trader Outbound"
-* Select the home station they'll trade for
+* Select the home station they'll trade for (click the button, right click on a station and choose 'Select')
 * Optionally select the wares they'll trade, or leave it empty to use the wares set in the stations logical overview
 * Select the min/max distance they'll trade
 * The stations manager skill controls the maximum trade distance
