@@ -59,104 +59,80 @@
             <remove_object_account object="this.assignedcontrolled" transfer="true" />
         </do_if>
 
-        <set_value name="$range" exact="$stxoutstation.sector" />
 
         <set_command_action commandaction="commandaction.searchingtrades" />
     </init>
     <attention min="unknown">
         <actions>
-            <!-- this.ship.commander.tradenpc.skill.management -->
-            <debug_text text="'NPC tradeskill: %s %s'.[$stxoutstation.tradenpc.knownname,$stxoutstation.tradenpc.skill.management]" chance="$debugchance" />
+            <set_value name="$debugchance" exact="100"/>
+
+            <debug_text text="'stxout: starting...'" chance="$debugchance" />
+            <set_value name="$failurereason" exact="null"/>
+
+            <do_if value="not $manualwarebasket?">
+                <set_value name="$manualwarebasket" exact="null"/>
+            </do_if>
+
+            <!-- initial sanity checks, we have a stxoutstation, we're played owned, etc -->
+            <do_if value="not $stxoutstation? or not $stxoutstation">
+                <debug_text text="'stxout: Homebase not set'" chance="$debugchance" />
+                <set_value name="$failurereason" exact="{64563, 2001}" comment="Station no longer exists" />
+                <resume label="finish"/>
+            </do_if>
+
             <do_if value="(not $stxoutstation.exists) or $stxoutstation.iswreck">
-                <debug_text text="'Homebase does not exist'" chance="$debugchance" />
-                <!-- TODO: Needs to fail order and wait -->
+                <debug_text text="'stxout: Homebase does not exist'" chance="$debugchance" />
                 <set_value name="$failurereason" exact="{64563, 2002}" comment="Station no longer exists" />
                 <resume label="finish" />
             </do_if>
 
-            <!-- update the wares we deal with for a new trade run - ensure that we don't miss any wares if the list has changed due to the stxoutstation being expanded -->
-            <do_if value="$stxoutstation.exists and not $stxoutstation.iswreck">
-                <set_value name="$resources" exact="$stxoutstation.resources.list" />
-                <set_value name="$products" exact="$stxoutstation.products.list" />
-                <set_value name="$tradewares" exact="$stxoutstation.tradewares.list" />
-
-                <!-- at this point, $products contains all of the wares that our commander wants to dispose of. clean up all of the entries in this.$sellpricetable that are not products. -->
-                <do_if value="this.$sellpricetable?">
-                    <do_for_each name="$locware" in="this.$sellpricetable" reverse="true">
-                        <do_if value="not $products.indexof.{$locware} and not $tradewares.indexof.{$locware}">
-                            <debug_text text="'cleaning up %s from sellpricetable.'.[$locware]" chance="$debugchance" />
-                            <remove_value name="this.$sellpricetable.{$locware}" />
-                        </do_if>
-                    </do_for_each>
-                </do_if>
-
-                <!-- start with an empty list in case $warebasket has wares that $stxoutstation no longer needs. -->
-                <create_list name="$locwares" />
-
-                <do_for_each name="$ware" in="$resources">
-                    <do_if value="not $locwares.indexof.{$ware}">
-                        <do_if value="(this.ship.cargo.{$ware}.max gt 0) and not $ware.isprocessed">
-                            <append_to_list name="$locwares" exact="$ware" />
-                            <debug_text text="'adding resource: %s'.[$ware]" chance="$debugchance"/>
-                        </do_if>
-                    </do_if>
-                </do_for_each>
-                <do_for_each name="$ware" in="$products">
-                    <do_if value="not $locwares.indexof.{$ware}">
-                        <do_if value="(this.ship.cargo.{$ware}.max gt 0) and not $ware.isprocessed">
-                            <append_to_list name="$locwares" exact="$ware" />
-                            <debug_text text="'adding product: %s'.[$ware]" chance="$debugchance"/>
-                        </do_if>
-                    </do_if>
-                </do_for_each>
-                <do_for_each name="$ware" in="$tradewares">
-                    <do_if value="not $locwares.indexof.{$ware}">
-                        <do_if value="(this.ship.cargo.{$ware}.max gt 0) and not $ware.isprocessed">
-                            <append_to_list name="$locwares" exact="$ware" />
-                            <debug_text text="'adding tradeware: %s'.[$ware]" chance="$debugchance"/>
-                        </do_if>
-                    </do_if>
-                </do_for_each>
-
-                <remove_value name="$ware" />
-                <remove_value name="$tradewares" />
-                <remove_value name="$products" />
-                <remove_value name="$resources" />
-
-                <!-- check to see if we either added something or removed something from our warebasket. -->
-                <do_if value="not @$warebasket">
-                    <set_value name="$basketchanged" />
-                </do_if>
-                <do_else>
-                    <do_for_each name="$locware" in="$locwares">
-                        <do_if value="not $warebasket.indexof.{$locware}">
-                            <set_value name="$basketchanged" />
-                            <break />
-                        </do_if>
-                    </do_for_each>
-                </do_else>
-                <do_if value="not $basketchanged?">
-                    <do_for_each name="$locware" in="$warebasket">
-                        <do_if value="not $locwares.indexof.{$locware}">
-                            <set_value name="$basketchanged" />
-                            <break />
-                        </do_if>
-                    </do_for_each>
-                </do_if>
-
-                <do_if value="$basketchanged?">
-                    <debug_text text="'%s %s %s updating warebasket. \nold warebasket: %s\nnew warebasket: %s'.[@this.ship.idcode, @this.ship.knownname, this.ship, $warebasket, $locwares]" chance="$debugchance" />
-                    <set_value name="$warebasket" exact="$locwares.clone" />
-                    <do_if value="@this.ship.order.id == 'STRedux_Outbound'">
-                        <edit_order_param order="this.ship.order" param="'warebasket'" value="$locwares" />
-                        <wait exact="1ms" />
-                    </do_if>
-                </do_if>
-
-                <remove_value name="$basketchanged" />
-                <remove_value name="$locwares" />
-                <remove_value name="$locware" />
+            <do_if value="not this.isplayerowned">
+                <debug_text text="'stxout: Cannot run on non-player owned ships'" chance="$debugchance" />
+                <set_value name="$failurereason" exact="{64563, 2003}" comment="Running on NPC Ships" />
+                <resume label="finish" />
             </do_if>
+
+            <!-- informational debugging -->
+            <debug_text text="'stxout %s: Ship: %s, Homebase: %s, Manager: %s, ManagerSkill: %s'.[this.ship.idcode, this.ship.knownname,$stxoutstation.knownname,$stxoutstation.tradenpc.knownname,$stxoutstation.tradenpc.skill.management/3]" chance="$debugchance" />
+            <debug_text text="'stxout %s: Assigned Controlled?: %s'.[this.ship.idcode, this.assignedcontrolled?]" chance="$debugchance" />
+            <do_if value="this.assignedcontrolled? and this.assignedcontrolled">
+                <debug_text text="'stxout %s: Assigned Controlled Ship?:%s, Station?:%s, Order?:%s, DefaultOrder?:%s, Commander?:%s'.[this.ship.idcode,this.assignedcontrolled.isclass.ship,this.assignedcontrolled.isclass.station,this.assignedcontrolled.order?,this.assignedcontrolled.defaultorder?,this.assignedcontrolled.commander?]" chance="$debugchance"/>
+                <do_if value="this.assignedcontrolled.commander? and this.assignedcontrolled.commander">
+                    <debug_text text="'steduxout %s: Commander: %s'.[this.ship.idcode,this.assignedcontrolled.commander.knownname]" chance="$debugchance" />
+                </do_if>
+            </do_if>
+            <debug_text text="'stxout %s: Order?:%s, DefaultOrder:%s'.[this.ship.idcode,this.order?,this.defaultorder?]" chance="$debugchance"/>
+
+            <set_value name="$range" exact="$stxoutstation.sector" />
+
+            <!-- Update the trade wares -->
+            <set_value name="$warestation" exact="$stxoutstation" />
+            <set_value name="$basketchanged" exact="false" />
+            <create_list name="$locwares" />
+            <include_interrupt_actions ref="STReduxUpdateWares"/>
+
+            <do_if value="$basketchanged">
+                <do_if value="not $locwares.count">
+                    <debug_text text="'stxout %s: Warebasket is empty'.[this.ship.idcode]" chance="$debugchance" />
+                    <set_value name="$failurereason" exact="{64563, 2004}" comment="Empty warebasket" />
+                    <resume label="basketcleanup"/>
+                </do_if>
+
+                <debug_text text="'stxout %s: updating warebasket:\nold warebasket (%s): %s\nnew warebasket (%s): %s'.[@this.ship.idcode, $warebasket.count, $warebasket, $locwares.count, $locwares]" chance="$debugchance" />
+                <set_value name="$warebasket" exact="$locwares.clone" />
+                <do_if value="@this.ship.order.id == 'STRedux_Outbound'">
+                    <edit_order_param order="this.ship.order" param="'warebasket'" value="$locwares" />
+                    <wait exact="1ms" />
+                </do_if>
+            </do_if>
+            <do_else>
+                <debug_text text="'stxout %s: warebasket unchanged'.[@this.ship.idcode]" chance="$debugchance"/>
+                <do_if value="not $warebasket.count">
+                    <debug_text text="'stxout %s: Warebasket is empty'.[this.ship.idcode]" chance="$debugchance" />
+                    <set_value name="$failurereason" exact="{64563, 2004}" comment="Empty warebasket" />
+                    <resume label="basketcleanup"/>
+                </do_if>
+            </do_else>
 
             <run_script name="'order.stredux.traderoutine'">
                 <param name="warebasket" value="$warebasket.clone" />
@@ -168,6 +144,25 @@
                 <param name="debugchance" value="$debugchance" />
                 <param name="debugchance2" value="$debugchance" />
             </run_script>
+
+            <label name="basketcleanup" />
+            <remove_value name="$basketchanged" />
+            <remove_value name="$locwares" />
+
+            <label name="finish" />
+
+            <do_if value="$failurereason?">
+                <set_order_failed order="this.assignedcontrolled.order" text="$failurereason" recurring="this.assignedcontrolled.order != this.assignedcontrolled.defaultorder" />
+                <wait min="30s" max="40s" />
+            </do_if>
+            <do_elseif value="this.assignedcontrolled.order != this.assignedcontrolled.defaultorder">
+                <clear_recurring_order_failure object="this.assignedcontrolled" id="this.assignedcontrolled.order.id" />
+            </do_elseif>
+
+            <wait min="1s" max="3s" />
+
+            <return />
+            <!-- <return value="$returnvalue" /> -->
         </actions>
     </attention>
 </aiscript>

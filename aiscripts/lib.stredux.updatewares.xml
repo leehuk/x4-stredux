@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aiscript name="lib.stredux.updatewares" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+    <!-- Updates the ships wares list from a given station -->
+    <interrupts>
+        <library>
+            <actions name="STReduxUpdateWares">
+                <set_value name="$resources" exact="$warestation.resources.list" />
+                <set_value name="$products" exact="$warestation.products.list" />
+                <set_value name="$tradewares" exact="$warestation.tradewares.list" />
+
+                <!-- at this point, $products contains all of the wares that our commander wants to dispose of. clean up all of the entries in this.$sellpricetable that are not products. -->
+                <do_if value="this.$sellpricetable?">
+                    <do_for_each name="$locware" in="this.$sellpricetable" reverse="true">
+                        <do_if value="not $products.indexof.{$locware} and not $tradewares.indexof.{$locware}">
+                            <debug_text text="'streduxupdatewares: cleaning up %s from sellpricetable.'.[$locware]" chance="$debugchance" />
+                            <remove_value name="this.$sellpricetable.{$locware}" />
+                        </do_if>
+                    </do_for_each>
+                </do_if>
+
+                <do_for_each name="$ware" in="$resources">
+                    <do_if value="not $locwares.indexof.{$ware}">
+                        <do_if value="(this.ship.cargo.{$ware}.max gt 0) and not $ware.isprocessed">
+                            <do_if value="$manualwarebasket and $manualwarebasket.indexof.{$ware}">
+                                <append_to_list name="$locwares" exact="$ware" />
+                                <debug_text text="'streduxupdatewares: adding resource: %s'.[$ware]" chance="$debugchance" />
+                            </do_if>
+                        </do_if>
+                    </do_if>
+                </do_for_each>
+                <do_for_each name="$ware" in="$products">
+                    <do_if value="not $locwares.indexof.{$ware}">
+                        <do_if value="(this.ship.cargo.{$ware}.max gt 0) and not $ware.isprocessed">
+                            <do_if value="$manualwarebasket and $manualwarebasket.indexof.{$ware}">
+                                <append_to_list name="$locwares" exact="$ware" />
+                                <debug_text text="'streduxupdatewares: adding product: %s'.[$ware]" chance="$debugchance" />
+                            </do_if>
+                        </do_if>
+                    </do_if>
+                </do_for_each>
+                <do_for_each name="$ware" in="$tradewares">
+                    <do_if value="not $locwares.indexof.{$ware}">
+                        <do_if value="(this.ship.cargo.{$ware}.max gt 0) and not $ware.isprocessed">
+                            <do_if value="$manualwarebasket and $manualwarebasket.indexof.{$ware}">
+
+                                <append_to_list name="$locwares" exact="$ware" />
+                                <debug_text text="'streduxupdatewares: adding tradeware: %s'.[$ware]" chance="$debugchance" />
+                            </do_if>
+                        </do_if>
+                    </do_if>
+                </do_for_each>
+
+                <remove_value name="$ware" />
+                <remove_value name="$resources" />
+                <remove_value name="$products" />
+                <remove_value name="$tradewares" />
+
+                <!-- check to see if we either added something or removed something from our warebasket. -->
+                <do_if value="not @$warebasket">
+                    <set_value name="$basketchanged" exact="true" />
+                </do_if>
+                <!-- one of these might be empty.. -->
+                <do_elseif value="$warebasket.count != $locwares.count">
+                    <set_value name="$basketchanged" exact="true" />
+                </do_elseif>
+                <do_else>
+                    <do_for_each name="$locware" in="$locwares">
+                        <do_if value="not $warebasket.indexof.{$locware}">
+                            <set_value name="$basketchanged" exact="true" />
+                            <break />
+                        </do_if>
+                    </do_for_each>
+                </do_else>
+                <do_if value="not $basketchanged">
+                    <do_for_each name="$locware" in="$warebasket">
+                        <do_if value="not $locwares.indexof.{$locware}">
+                            <set_value name="$basketchanged" exact="true" />
+                            <break />
+                        </do_if>
+                    </do_for_each>
+                </do_if>
+
+                <remove_value name="$locware" />
+            </actions>
+        </library>
+    </interrupts>
+</aiscript>
