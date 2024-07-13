@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aiscript name="order.stredux.inbound" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+    <order id="STRedux_Inbound" name="{64563, 1004}" description="{64563, 1005}" category="trade" allowinloop="false">
+        <params>
+            <param name="stxinstation" required="true" default="null" type="object" text="{64563, 1050}" comment="Station to trade for">
+                <input_param name="class" value="[class.station]" />
+            </param>
+            <param name="warebasket" default="null" type="internal" text="{1041, 10146}" comment="Wares. List of resources that we will supply, populated from station" />
+            <param name="manualwarebasket" required="false" default="null" type="list" text="{64563, 1052}" comment="Optional wares override">
+                <input_param name="type" value="'ware'" />
+                <input_param name="cancarry" value="this.ship" />
+            </param>
+            <param name="range" default="0" type="internal" text="{1041, 10005}" comment="Always $stxinstation.sector" />
+            <param name="minbuy" default="0" type="number" text="{1041, 10067}" comment="Min gate distance to buy resources">
+                <input_param name="startvalue" value="0" />
+                <input_param name="min" value="0" />
+                <input_param name="max" value="$stxinstation.tradenpc.skill.management/3" />
+                <input_param name="step" value="1" />
+            </param>
+            <param name="maxbuy" default="0" type="number" text="{1041, 10067}" comment="Max gate distance to buy resources. Maximum buy range is limited by $stxinstation.commander">
+                <input_param name="startvalue" value="0" />
+                <input_param name="min" value="0" />
+                <input_param name="max" value="$stxinstation.tradenpc.skill.management/3" />
+                <input_param name="step" value="1" />
+            </param>
+            <param name="minsell" default="0" type="internal" text="{1041, 10069}" comment="Unused" />
+            <param name="maxsell" default="0" type="internal" text="{1041, 10058}" comment="Unused" />
+            <param name="duration" default="0s" type="internal" infinitevalue="0s" text="{1041, 10034}" comment="Unused" />
+            <param name="tradeforbuildstorage" default="null" type="internal" comment="Unused" />
+            <param name="usecover" default="false" type="internal" text="Use Cover" comment="Unused" />
+
+            <param name="debugchance" type="bool" default="0" advanced="true" text="{1041, 10086}" comment="Print debug output">
+                <input_param name="truevalue" value="100" />
+            </param>
+        </params>
+        <requires>
+            <match shiptype="shiptype.lasertower" negate="true" />
+            <match class="class.spacesuit" negate="true" />
+        </requires>
+    </order>
+    <interrupts>
+        <handler ref="SectorChangeHandler" />
+        <handler ref="AttackHandler" />
+        <handler ref="MissileLockHandler" />
+        <handler ref="ScannedHandler" />
+        <handler ref="InspectedHandler" />
+        <handler ref="FoundAbandonedHandler" />
+        <handler ref="FoundLockboxHandler" />
+        <handler ref="ResupplyHandler" />
+        <handler ref="TargetInvalidHandler" />
+        <handler ref="TideHandler" />
+    </interrupts>
+    <init>
+        <set_value name="$time_start" exact="player.age" />
+
+        <do_if value="this.assignedcontrolled.hasownaccount and not this.assignedcontrolled.tradeorders.count">
+            <!-- NB: at the moment, ships only have temporary accounts set up when they have trade orders. These temp accounts are cleared when the trades are cleaned up. -->
+            <remove_object_account object="this.assignedcontrolled" transfer="true" />
+        </do_if>
+
+
+        <set_command_action commandaction="commandaction.searchingtrades" />
+    </init>
+    <attention min="unknown">
+        <actions>
+            <!-- BETA: FORCE DEBUGGING ON -->
+            <set_value name="$debugchance" exact="100" />
+
+            <debug_text text="'stxin: starting...'" chance="$debugchance" />
+            <set_value name="$failurereason" exact="null" />
+
+            <do_if value="not $manualwarebasket?">
+                <set_value name="$manualwarebasket" exact="null" />
+            </do_if>
+
+            <!-- initial sanity checks, we have a stxinstation, we're played owned, etc -->
+            <do_if value="not $stxinstation? or not $stxinstation">
+                <debug_text text="'stxin: Homebase not set'" chance="$debugchance" />
+                <set_value name="$failurereason" exact="{64563, 2001}" comment="Station no longer exists" />
+                <resume label="finish" />
+            </do_if>
+
+            <do_if value="(not $stxinstation.exists) or $stxinstation.iswreck">
+                <debug_text text="'stxin: Homebase does not exist'" chance="$debugchance" />
+                <set_value name="$failurereason" exact="{64563, 2002}" comment="Station no longer exists" />
+                <resume label="finish" />
+            </do_if>
+
+            <do_if value="not this.isplayerowned">
+                <debug_text text="'stxin: Cannot run on non-player owned ships'" chance="$debugchance" />
+                <set_value name="$failurereason" exact="{64563, 2003}" comment="Running on NPC Ships" />
+                <resume label="finish" />
+            </do_if>
+
+            <!-- informational debugging -->
+            <debug_text text="'stxin %s: Ship: %s, Homebase: %s, Manager: %s, ManagerSkill: %s'.[this.ship.idcode, this.ship.knownname,$stxinstation.knownname,$stxinstation.tradenpc.knownname,$stxinstation.tradenpc.skill.management/3]" chance="$debugchance" />
+            <debug_text text="'stxin %s: Assigned Controlled?: %s'.[this.ship.idcode, this.assignedcontrolled?]" chance="$debugchance" />
+            <do_if value="this.assignedcontrolled? and this.assignedcontrolled">
+                <debug_text text="'stxin %s: Assigned Controlled Ship?:%s, Station?:%s, Order?:%s, DefaultOrder?:%s, Commander?:%s'.[this.ship.idcode,this.assignedcontrolled.isclass.ship,this.assignedcontrolled.isclass.station,this.assignedcontrolled.order?,this.assignedcontrolled.defaultorder?,this.assignedcontrolled.commander?]" chance="$debugchance" />
+                <do_if value="this.assignedcontrolled.commander? and this.assignedcontrolled.commander">
+                    <debug_text text="'steduxout %s: Commander: %s'.[this.ship.idcode,this.assignedcontrolled.commander.knownname]" chance="$debugchance" />
+                </do_if>
+            </do_if>
+            <debug_text text="'stxin %s: Order?:%s, DefaultOrder:%s'.[this.ship.idcode,this.order?,this.defaultorder?]" chance="$debugchance" />
+
+            <set_value name="$range" exact="$stxinstation.sector" />
+
+            <!-- Update the trade wares -->
+            <set_value name="$warestation" exact="$stxinstation" />
+            <set_value name="$basketchanged" exact="false" />
+            <create_list name="$locwares" />
+            <include_interrupt_actions ref="STReduxUpdateWares" />
+
+            <do_if value="$basketchanged">
+                <do_if value="not $locwares.count">
+                    <debug_text text="'stxin %s: Warebasket is empty'.[this.ship.idcode]" chance="$debugchance" />
+                    <set_value name="$failurereason" exact="{64563, 2004}" comment="Empty warebasket" />
+                    <resume label="basketcleanup" />
+                </do_if>
+
+                <debug_text text="'stxin %s: updating warebasket:\nold warebasket: %s\nnew warebasket: %s'.[@this.ship.idcode, $warebasket, $locwares]" chance="$debugchance" />
+                <set_value name="$warebasket" exact="$locwares.clone" />
+                <do_if value="@this.ship.order.id == 'STRedux_Outbound'">
+                    <edit_order_param order="this.ship.order" param="'warebasket'" value="$locwares" />
+                    <wait exact="1ms" />
+                </do_if>
+            </do_if>
+            <do_else>
+                <debug_text text="'stxin %s: warebasket unchanged'.[@this.ship.idcode]" chance="$debugchance" />
+                <do_if value="not $warebasket.count">
+                    <debug_text text="'stxin %s: Warebasket is empty'.[this.ship.idcode]" chance="$debugchance" />
+                    <set_value name="$failurereason" exact="{64563, 2004}" comment="Empty warebasket" />
+                    <resume label="basketcleanup" />
+                </do_if>
+            </do_else>
+
+            <run_script name="'order.stredux.traderoutine'">
+                <param name="warebasket" value="$warebasket.clone" />
+                <param name="range" value="$range" />
+                <param name="stxinstation" value="$stxinstation" />
+                <param name="minsell" value="$minsell" />
+                <param name="maxsell" value="$maxsell" />
+                <param name="debugchance" value="$debugchance" />
+                <param name="debugchance2" value="$debugchance" />
+            </run_script>
+
+            <label name="basketcleanup" />
+            <remove_value name="$basketchanged" />
+            <remove_value name="$locwares" />
+
+            <label name="finish" />
+
+            <do_if value="$failurereason?">
+                <set_order_failed order="this.assignedcontrolled.order" text="$failurereason" recurring="this.assignedcontrolled.order != this.assignedcontrolled.defaultorder" />
+                <wait min="30s" max="40s" />
+            </do_if>
+            <do_elseif value="this.assignedcontrolled.order != this.assignedcontrolled.defaultorder">
+                <clear_recurring_order_failure object="this.assignedcontrolled" id="this.assignedcontrolled.order.id" />
+            </do_elseif>
+
+            <wait min="1s" max="3s" />
+
+            <return />
+        </actions>
+    </attention>
+</aiscript>
