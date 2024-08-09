@@ -39,12 +39,28 @@
     <!-- INBOUND: Rerun the trade search with our limitations.  We are selling, our station is buying -->
     <add sel="/aiscript[@name='trade.find.free']/attention/actions/do_all[@exact='$sellspaces.count']/do_if[@value='not $smuggle and this.assignedcontrolled.hidecargochance lt 100']" pos="before">
         <do_if value="@$stxinstation">
+            <debug_text text="'stredux %s: rerunning buy offer search'.[this.ship.idcode]" chance="$debugchance" />
             <find_buy_offer tradepartner="this.ship" buyer="$stxinstation" wares="$filteredwarebasket" result="$buyoffers" multiple="true">
                 <offervolume min="if $sellcurrentcargo_internal? then 1 else (if $practicalminvolume? then $practicalminvolume else 1)" tradepartner="this.ship"/>
-              </find_buy_offer>
+            </find_buy_offer>
 
             <do_if value="not $buyoffers.count">
                 <debug_text text="'stredux %s: no buy offers from our station'.[this.ship.idcode]" chance="$debugchance" />
+            </do_if>
+        </do_if>
+        <do_else>
+            <debug_text text="'stredux %s: no stxinstation'.[this.ship.idcode]" chance="$debugchance" />
+        </do_else>
+    </add>
+
+    <!-- INBOUND: Restrict buying from our inbound station -->
+    <add sel="/aiscript[@name='trade.find.free']/attention/actions/do_elseif[@value='$buyspaces.count']/do_if/do_all[@exact='$buyspaces.count']/do_if[@value='$selloffers.count']/do_all[@exact='$list_sortedsellofferkeys.count']/do_if" pos="before">
+        <do_if value="@$stxinstation">
+            <do_if value="$stxinstation == $table_selloffers.{$list_sortedsellofferkeys.{$Counter}}.seller">
+                <debug_text text="'stredux %s: filtering offer from stxinstation %s'.[this.ship.idcode, $stxinstation.knownname]" chance="$debugchance" />
+                <remove_value name="$table_selloffers.{$list_sortedsellofferkeys.{$Counter}}"/>
+                <remove_value name="$list_sortedsellofferkeys.{$Counter}"/>
+                <continue/>
             </do_if>
         </do_if>
     </add>
