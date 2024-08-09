@@ -2,6 +2,7 @@
 <diff>
     <add sel="/aiscript[@name='order.assist']/attention/actions/do_if/do_if/do_if[@value='not $createdefaultorder?']">
         <do_if value="$orderdef.$id == 'STRedux_Outbound'">
+            <set_value name="$added"/>
             <do_if value="$createdefaultorder? or (this.assignedcontrolled.waretransport == $commander.waretransport)">
                 <do_if value="$createdefaultorder?">
                     <create_order id="$orderdef.$id" object="this.assignedcontrolled" default="true">
@@ -35,6 +36,7 @@
             </do_if>
         </do_if>
         <do_elseif value="$orderdef.$id == 'STRedux_Inbound'">
+            <set_value name="$added"/>
             <do_if value="$createdefaultorder? or (this.assignedcontrolled.waretransport == $commander.waretransport)">
                 <do_if value="$createdefaultorder?">
                     <create_order id="$orderdef.$id" object="this.assignedcontrolled" default="true">
