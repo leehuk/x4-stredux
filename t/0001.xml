@@ -8,6 +8,9 @@
 		<t id="1004">Station Trader Inbound</t>
 		<t id="1005">Station Trader that can only make inbound trades</t>
 
+		<t id="1006">Station Miner</t>
+		<t id="1007">Station Miner</t>
+
 		<t id="1050">Home Station</t>
 		<t id="1051">Dock at Home Station</t>
 		<t id="1052">Wares Override</t>

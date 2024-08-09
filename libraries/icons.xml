@@ -4,5 +4,6 @@
     <add sel="/icons">
         <icon name="order_stredux_inbound" texture="assets\fx\gui\textures\order\order_traderoutine.tga" height="32" width="32"></icon>
         <icon name="order_stredux_outbound" texture="assets\fx\gui\textures\order\order_traderoutine.tga" height="32" width="32"></icon>
+        <icon name="order_stredux_miner" texture="assets\fx\gui\textures\order\order_traderoutine.tga" height="32" width="32"></icon>
     </add>
 </diff>

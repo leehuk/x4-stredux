@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+    <add sel="/aiscript[@name='order.mining.routine']/order/params">
+        <param name="stxminstation" default="null" type="internal" />
+    </add>
+
+    <add sel="/aiscript[@name='order.mining.routine']/init/set_value[@name='$time_start']" pos="before">
+        <do_if value="@$stxminstation">
+            <set_value name="$homebase" exact="$stxminstation" />
+        </do_if>
+    </add>
+
+    <add sel="/aiscript[@name='order.mining.routine']/init/set_value[@name='$time_start']" pos="before">
+        <do_if value="this.assignedcontrolled.order.id == 'STRedux_Miner'">
+            <set_value name="$thisorder" exact="this.assignedcontrolled.order" />
+        </do_if>
+    </add>
+
+    <add sel="/aiscript[@name='order.mining.routine']/attention/actions/do_if[@value='@this.assignedcontrolled.order.isrunning'][2]" pos="before">
+        <do_if value="this.assignedcontrolled.order.id == 'STRedux_Miner'">
+            <set_order_syncpoint_reached order="this.assignedcontrolled.order" />
+        </do_if>
+    </add>
+
+    <add sel="/aiscript[@name='order.mining.routine']/init/do_if[@value='this.isplayerowned']/do_else" pos="before">
+        <do_elseif value="@$stxminstation">
+        </do_elseif>
+    </add>
+</diff>

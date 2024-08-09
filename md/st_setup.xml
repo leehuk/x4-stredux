@@ -18,7 +18,9 @@
           Combining with mods such as Subordinate Order Access https://www.nexusmods.com/x4foundations/mods/289
           it is possible to modify the orders of the Mules even after station assignment.
         -->
+        <append_to_list name="global.$mod_stredux_CommandTags" exact="'STRedux_Inbound'" />
         <append_to_list name="global.$mod_stredux_CommandTags" exact="'STRedux_Outbound'" />
+        <append_to_list name="global.$mod_stredux_CommandTags" exact="'STRedux_Miner'" />
         <!-- Setup complete. -->
       </actions>
     </cue>

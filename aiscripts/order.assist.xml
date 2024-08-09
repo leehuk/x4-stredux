@@ -66,5 +66,31 @@
                 </do_else>
             </do_if>
         </do_elseif>
+        <do_elseif value="$orderdef.$id == 'STRedux_Miner'">
+            <set_value name="$added"/>
+                <do_if value="$createdefaultorder?">
+                    <create_order id="$orderdef.$id" object="this.assignedcontrolled" default="true">
+                        <param name="stxminstation" value="$orderdef.$stxminstation" />
+                        <param name="warebasket" value="$orderdef.$warebasket" />
+                        <param name="range" value="$orderdef.$range" />
+                        <param name="minbuy" value="$orderdef.$minbuy" />
+                        <param name="maxbuy" value="$orderdef.$maxbuy" />
+                    </create_order>
+                </do_if>
+                <do_else>
+                    <set_value name="$orderdef.$stxminstation" exact="$order.$stxminstation" />
+                    <set_value name="$orderdef.$warebasket" exact="$order.$warebasket" />
+                    <set_value name="$orderdef.$range" exact="$order.$range" />
+                    <set_value name="$orderdef.$minbuy" exact="$order.$minbuy" />
+                    <set_value name="$orderdef.$maxbuy" exact="$order.$maxbuy" />
+                    <run_script name="$scriptname">
+                        <param name="stxminstation" value="$order.$stxminstation" />
+                        <param name="warebasket" value="$order.$warebasket" />
+                        <param name="range" value="$order.$range" />
+                        <param name="minbuy" value="$order.$minbuy" />
+                        <param name="maxbuy" value="$order.$maxbuy" />
+                    </run_script>
+                </do_else>
+        </do_elseif>
     </add>
 </diff>
