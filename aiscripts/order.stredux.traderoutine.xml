@@ -303,15 +303,6 @@
         <!-- For jobs, get the string range 'zone', 'sector', 'cluster' -->
         <set_value name="$range" exact="this.assignedcontrolled.{$range}"/>
       </do_if>
-      <do_if value="this.isplayerowned">
-        <!-- if maxbuy or maxsell is 0, we must assume that the player wants us to go back to this space regardless of blacklist. -->
-        <do_if value="$maxbuy le 0">
-          <set_value name="$blacklist_overridebuy"/>
-        </do_if>
-        <do_if value="$maxsell le 0">
-          <set_value name="$blacklist_overridesell"/>
-        </do_if>
-      </do_if>
       <set_value name="$samebuysellrange" exact="$minsell == $minbuy and $maxsell == $maxbuy"/>
       <run_script name="'lib.find.sectors.inrange'" result="$buyspaces" sinceversion="8">
         <param name="refobject" value="$range"/>
@@ -323,8 +314,10 @@
         <!--The buy and sell ranges are the same, so clone the sectors.inrange results-->
         <set_value name="$sellspaces" exact="$buyspaces.clone"/>
       </do_if>
-      <do_if value="$blacklist_overridebuy? and not $buyspaces.indexof.{$range} and $range.isclass.sector">
+      <do_if value="this.isplayerowned and $maxbuy le 0 and not $buyspaces.indexof.{$range} and $range.isclass.sector">
         <append_to_list name="$buyspaces" exact="$range"/>
+        <!-- if maxbuy is 0 and $range is not in $buyspaces, we must assume that the player wants us to go back to $range regardless of blacklist. -->
+        <set_value name="$blacklist_overridebuy"/>
       </do_if>
       <debug_text text="'%s %s %s found %s buy spaces.'.[@this.assignedcontrolled.idcode, @this.assignedcontrolled.knownname, this.assignedcontrolled, $buyspaces.count]" chance="$debugchance"/>
       <do_all exact="$buyspaces.count" counter="$i" chance="0">
@@ -338,8 +331,10 @@
           <param name="debugchance" value="$debugchance"/>
         </run_script>
       </do_if>
-      <do_if value="$blacklist_overridesell? and not $sellspaces.indexof.{$range} and $range.isclass.sector">
+      <do_if value="this.isplayerowned and $maxsell le 0 and not $sellspaces.indexof.{$range} and $range.isclass.sector">
         <append_to_list name="$sellspaces" exact="$range"/>
+        <!-- if maxsell is 0 and $range is not in $sellspaces, we must assume that the player wants us to go back to $range regardless of blacklist. -->
+        <set_value name="$blacklist_overridesell"/>
       </do_if>
       <debug_text text="'%s %s %s found %s sell spaces.'.[@this.assignedcontrolled.idcode, @this.assignedcontrolled.knownname, this.assignedcontrolled, $sellspaces.count]" chance="$debugchance"/>
       <do_all exact="$sellspaces.count" counter="$i" chance="0">
@@ -350,7 +345,6 @@
         <debug_text text="'No buyspaces and no sellspaces. %s %s %s in sector %s cannot operate. Idling for %ss and trying again later in case conditions change.'.[@this.assignedcontrolled.idcode, @this.assignedcontrolled.knownname, this.assignedcontrolled, @this.assignedcontrolled.sector.knownname, $idleduration]"/>
         <resume label="prep"/>
       </do_if>
-      <!-- !!! THIS WILL CALL TRADE.FIND.COMMANDER !!!! -->
       <label name="find trade run"/>
       <do_if value="$duration and ((player.age - $time_start) gt $duration)">
         <resume label="finish"/>
@@ -524,6 +518,15 @@
             </do_all>
             <do_if value="$friendly_buyspaces.count">
               <set_value name="$buyspaceanchor" exact="$friendly_buyspaces.random"/>
+              <do_if value="not this.assignedcontrolled.commander and not this.isplayerowned and this.assignedcontrolled.hasrelation.enemy.{$range.owner} and not this.assignedcontrolled.hasrelation.enemy.{$buyspaceanchor.owner}">
+                <debug_text text="'anchorspace %s %s is in hostile hands. changing anchorspace to %s %s.'.[@$range.knownname, $range, @$buyspaceanchor.knownname, $buyspaceanchor]" chance="$debugchance"/>
+                <set_value name="$oldrange" exact="$range"/>
+                <set_value name="$range" exact="$buyspaceanchor"/>
+                <do_if value="@$thisorder.$range.isclass.sector and $oldrange == $thisorder.$range">
+                  <edit_order_param order="$thisorder" param="'range'" value="$buyspaceanchor"/>
+                </do_if>
+                <remove_value name="$oldrange"/>
+              </do_if>
             </do_if>
             <do_else>
               <set_value name="$buyspaceanchor" exact="this.sector"/>
@@ -571,7 +574,7 @@
       <!-- init buyamount to the $selloffer offeramount. Then we use it to cache the $buyoffer offeramount-->
       <set_value name="$buyamount" exact="if $selloffer.available then $selloffer.offeramount.{this.assignedcontrolled} else 0"/>
       <do_if value="$buyamount">
-        <set_value name="$fillcargo" exact="this.assignedcontrolled.commander.exists and ($selloffer.owner == this.assignedcontrolled.commander) and not this.assignedcontrolled.commander.resources.{$selloffer.ware}.exists and this.assignedcontrolled.commander.products.{$selloffer.ware}.exists"/>
+        <set_value name="$fillcargo" exact="not this.isplayerowned and this.assignedcontrolled.commander.exists and ($selloffer.owner == this.assignedcontrolled.commander) and not this.assignedcontrolled.commander.resources.{$selloffer.ware}.exists and this.assignedcontrolled.commander.products.{$selloffer.ware}.exists"/>
         <debug_text text="'fillcargo: %s, has a commander: %s, buying from commander: %s, ware not a resource: %s, ware: %s'.[$fillcargo, this.assignedcontrolled.commander.exists, ($selloffer.owner == this.assignedcontrolled.commander), not @this.assignedcontrolled.commander.resources.{$selloffer.ware}.exists, $selloffer.ware]" chance="$debugchance"/>
         <!-- I  want to buy, limit it to the free space for that ware -->
         <clamp_trade_amount trade="$selloffer" amount="$buyamount" buyer="this.assignedcontrolled" seller="$selloffer.seller" result="$amount"/>
