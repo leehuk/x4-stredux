@@ -17,7 +17,7 @@
                 <input_param name="max" value="$stxinstation.tradenpc.skill.management/3" />
                 <input_param name="step" value="1" />
             </param>
-            <param name="maxbuy" default="0" type="number" text="{1041, 10067}" comment="Max gate distance to buy resources. Maximum buy range is limited by $stxinstation.commander">
+            <param name="maxbuy" default="0" type="number" text="{1041, 10054}" comment="Max gate distance to buy resources. Maximum buy range is limited by $stxinstation.commander">
                 <input_param name="startvalue" value="0" />
                 <input_param name="min" value="0" />
                 <input_param name="max" value="$stxinstation.tradenpc.skill.management/3" />
@@ -138,8 +138,8 @@
                 <param name="warebasket" value="$warebasket.clone" />
                 <param name="range" value="$range" />
                 <param name="stxinstation" value="$stxinstation" />
-                <param name="minsell" value="$minsell" />
-                <param name="maxsell" value="$maxsell" />
+                <param name="minbuy" value="$minbuy" />
+                <param name="maxbuy" value="$maxbuy" />
                 <param name="debugchance" value="$debugchance" />
                 <param name="debugchance2" value="$debugchance" />
             </run_script>
